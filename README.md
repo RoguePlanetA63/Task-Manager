@@ -162,7 +162,13 @@ This project was developed with **Cursor** as the editor and AI pair-programming
 - **Inline assistance** — refactors, lint fixes, and tracing auth/RLS behavior.
 - **Explaining errors** — build failures, Supabase policy errors, and client/server mismatches.
 
-Ongoing work is tracked in **Git**; use `git log --oneline` for a concise history of changes. After your first pushes, you can add short milestone bullets tied to real commit hashes in this section.
+Ongoing work is tracked in **Git**; use `git log --oneline` for a concise history of changes.
+
+### Repository milestones
+
+Recent commits (run `git log --oneline` locally for the full list):
+
+- `c081510` — Initial import: React + Vite task manager, Supabase migrations (`Tasks`, `TaskLog`, `profiles`), README, and `.gitignore` hardening for `.env`.
 
 ---
 
