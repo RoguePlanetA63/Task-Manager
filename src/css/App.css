@@ -1,0 +1,481 @@
+@import './components.css';
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================
+   Admin panel (CSS-only polish; matches AdminPanel.jsx)
+   ============================================================ */
+
+.admin-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-1);
+}
+
+.admin-panel__header {
+  margin: 0;
+}
+
+.admin-panel__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  color: var(--text-h);
+  letter-spacing: -0.01em;
+}
+
+.admin-panel__lead {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 42rem;
+}
+
+.admin-panel__error {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-toolbar__search {
+  flex: 1 1 14rem;
+  min-width: 0;
+  position: relative;
+}
+
+.admin-toolbar__search input {
+  font: inherit;
+  width: 100%;
+  padding: 0.55rem 0.7rem 0.55rem 2.2rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7682' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg>");
+  background-repeat: no-repeat;
+  background-position: 0.6rem 50%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-toolbar__search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.admin-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.admin-toolbar__label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.admin-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.admin-radio input {
+  accent-color: var(--accent);
+}
+
+.admin-refresh {
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-refresh:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.admin-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-2);
+  color: var(--text-h);
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  z-index: 1;
+}
+
+.admin-th-btn {
+  font: inherit;
+  font-size: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-th-sort {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.admin-table__row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.admin-table tbody tr:nth-child(even) {
+  background: var(--surface-2);
+}
+
+.admin-table__row:hover {
+  background: var(--accent-soft) !important;
+}
+
+.admin-table__row--deleted {
+  opacity: 0.7;
+}
+
+.admin-table__row--deleted td:not(.admin-table__actions) {
+  text-decoration: line-through;
+  text-decoration-color: var(--muted);
+}
+
+.admin-table__desc {
+  max-width: 16rem;
+  word-break: break-word;
+}
+
+.admin-table__actions {
+  cursor: default;
+  white-space: nowrap;
+}
+
+.admin-table__actions:hover {
+  background: transparent;
+}
+
+.admin-table__empty {
+  text-align: center;
+  color: var(--muted);
+  padding: var(--space-5);
+}
+
+.admin-table__mono {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 0.72rem;
+  word-break: break-all;
+  max-width: 8rem;
+  color: var(--muted);
+}
+
+.admin-table__json {
+  font-size: 0.7rem;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  word-break: break-word;
+  max-width: 12rem;
+  color: var(--muted);
+}
+
+.admin-table--compact {
+  font-size: 0.8rem;
+}
+
+.admin-row-btn {
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-right: 0.35rem;
+  margin-bottom: 0.25rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.admin-row-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.admin-row-btn--danger {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: var(--danger);
+}
+
+.admin-row-btn--danger:hover {
+  background: var(--danger-soft);
+}
+
+.admin-row-btn--restore {
+  border-color: rgba(34, 197, 94, 0.4);
+  color: var(--success);
+}
+
+.admin-row-btn--restore:hover {
+  background: var(--success-soft);
+}
+
+.admin-audit {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-audit__title {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--text-h);
+  letter-spacing: -0.01em;
+}
+
+.admin-audit__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.45;
+  padding: var(--space-2) var(--space-3);
+  background: var(--warning-soft);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-sm);
+}
+
+.admin-table-wrap--log {
+  margin-bottom: 0;
+}
+
+/* ============================================================
+   Admin modal — uses the AdminPanel's own classes
+   (the new shared Modal lives in components.css; these keep
+   the existing JSX in AdminPanel.jsx working without edits)
+   ============================================================ */
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  animation: modal-fade 0.15s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-modal-backdrop {
+    background: rgba(0, 0, 0, 0.6);
+  }
+}
+
+.admin-modal {
+  width: 100%;
+  max-width: 28rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  animation: modal-in 0.18s ease;
+}
+
+.admin-modal__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+  color: var(--text-h);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-modal__badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.admin-modal__meta {
+  margin: 0 0 var(--space-4);
+  font-size: 0.85rem;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.admin-modal__warn {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.admin-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.admin-modal__form label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.admin-modal__form input {
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-modal__form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.admin-modal__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  justify-content: flex-end;
+}
+
+.admin-modal__actions button {
+  font: inherit;
+  cursor: pointer;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-modal__actions button:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.admin-modal__actions button[type='submit'] {
+  background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.admin-modal__actions button[type='submit']:hover {
+  filter: brightness(1.06);
+  border-color: transparent;
+}
+
+.admin-modal__footer-actions {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
