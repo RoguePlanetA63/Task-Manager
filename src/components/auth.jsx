@@ -187,15 +187,8 @@ function Auth() {
             <button type="submit" className="auth-button">
               Sign Up
             </button>
-            <p className="auth-divider">or</p>
-            <button className="auth-link" onClick={signInWithGoogle}>
-              <img
-                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                alt="Google"
-                width="18"
-                height="18"
-              />
-              Continue with Google
+            <button className="auth-link" onClick={setLayoutState.bind(null, 'InitialUI')}>
+              Back
             </button>
           </>
         )
