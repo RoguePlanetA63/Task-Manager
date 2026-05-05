@@ -2,7 +2,6 @@
 
 A team task board built with React and Supabase: authenticated users manage their own tasks, see others’ active work on a shared board, maintain a **profiles** directory for display names, and optionally use an **Admin** panel for broader task operations. Row Level Security (RLS) enforces access; the UI mirrors those rules for navigation only.
 
-**Repository:** add your GitHub URL here after publishing (e.g. `https://github.com/<you>/task-manager`).
 
 ---
 
@@ -15,8 +14,7 @@ A team task board built with React and Supabase: authenticated users manage thei
 
 ### Environment
 
-1. Copy `.env.example` to `.env.local`.
-2. Set:
+1. Set:
    - `VITE_SUPABASE_URL` — project URL (e.g. `https://xxxx.supabase.co`).
    - `VITE_SUPABASE_ANON_KEY` — project anon / public key.
 
@@ -186,7 +184,7 @@ Create a new repository on GitHub (empty, no default README if you want a linear
 
 ```bash
 git branch -M main
-git remote add origin https://github.com/<you>/<repo>.git
+git remote add origin https://github.com/RoguePlanetA63/Task-Manager.git
 git push -u origin main
 ```
 
