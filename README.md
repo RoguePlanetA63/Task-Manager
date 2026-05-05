@@ -2,7 +2,7 @@
 
 A team task board built with React and Supabase: authenticated users manage their own tasks, see others’ active work on a shared board, maintain a **profiles** directory for display names, and optionally use an **Admin** panel for broader task operations. Row Level Security (RLS) enforces access; the UI mirrors those rules for navigation only.
 
-**Repository:** [github.com/RoguePlanetA63/Task-Manager](https://github.com/RoguePlanetA63/Task-Manager)
+**Repository:** add your GitHub URL here after publishing (e.g. `https://github.com/<you>/task-manager`).
 
 ---
 
