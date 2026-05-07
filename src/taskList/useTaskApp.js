@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { pingAuthHealth } from '../lib/authHealth'
 import * as tasksApi from '../lib/tasksApi'
 import { normalizeEmail } from '../lib/emailUtils'
+import { createCalendarEventViaEdgeFunction, editCalendarEventViaEdgeFunction, deleteCalendarEventViaEdgeFunction } from '../lib/calendarEdgeFunctionApi'
 
 export function useTaskApp() {
   const [conn, setConn] = useState({ status: 'checking', message: '' })
@@ -79,18 +80,52 @@ export function useTaskApp() {
     e.preventDefault()
     if (!userEmail) return
     const form = e.target
-    const { error } = await tasksApi.insertTask({
-      taskName: form.taskName.value,
-      taskDescription: form.taskDescription.value,
+    const taskName = form.taskName.value
+    const taskDescription = form.taskDescription.value
+    const startTime = form.taskStartAt?.value
+    const endTime = form.taskEndAt?.value
+
+    const { data, error } = await tasksApi.insertTask({
+      taskName,
+      taskDescription,
       email: userEmail,
       userId,
+      startAt: startTime ? new Date(startTime).toISOString() : null,
+      endAt: endTime ? new Date(endTime).toISOString() : null,
     })
+
     if (error) {
       console.error(error)
-    } else {
-      e.target.reset()
-      await loadTasks()
+      return
     }
+
+    // Try to sync to Google Calendar if user has connected it and times provided
+    if (data?.id && startTime && endTime) {
+      try {
+        const eventResponse = await createCalendarEventViaEdgeFunction({
+          calendar_id: 'primary',
+          summary: taskName,
+          description: taskDescription,
+          start: new Date(startTime).toISOString(),
+          end: new Date(endTime).toISOString(),
+        })
+
+        // Update task with google_event_id
+        if (eventResponse?.event?.id) {
+          await tasksApi.updateTask(
+            data.id,
+            { google_event_id: eventResponse.event.id },
+            userEmail,
+            { userId, previous: data }
+          )
+        }
+      } catch (calendarError) {
+        console.warn('Calendar sync failed:', calendarError.message)
+      }
+    }
+
+    e.target.reset()
+    await loadTasks()
   }
 
   const beginEditTask = (id) => {
@@ -106,18 +141,41 @@ export function useTaskApp() {
     if (!userEmail) return
     const form = e.target
     const previous = tasks.find((t) => t.id === id)
+    const newTitle = form.taskName.value
+    const newDescription = form.taskDescription.value
+
     const { data, error } = await tasksApi.updateTask(
       id,
       {
-        Task: form.taskName.value,
-        Description: form.taskDescription.value,
+        Task: newTitle,
+        Description: newDescription,
       },
       userEmail,
       previous && userId ? { userId, previous } : {},
     )
+
     if (error) {
       console.error(error)
-    } else if (data) {
+      return
+    }
+
+    if (data) {
+      // Sync calendar event if it exists
+      if (previous?.google_event_id) {
+        try {
+          await editCalendarEventViaEdgeFunction({
+            calendar_id: 'primary',
+            event_id: previous.google_event_id,
+            summary: newTitle,
+            description: newDescription,
+            start: previous.start_at,
+            end: previous.end_at,
+          })
+        } catch (calendarError) {
+          console.warn('Calendar event update failed:', calendarError.message)
+        }
+      }
+
       setEditingId(null)
       await loadTasks()
     }
@@ -131,9 +189,25 @@ export function useTaskApp() {
       userEmail,
       previous && userId ? { userId, previous } : {},
     )
+
     if (error) {
       console.error(error)
-    } else if (data) {
+      return
+    }
+
+    if (data) {
+      // Delete calendar event if it exists
+      if (previous?.google_event_id) {
+        try {
+          await deleteCalendarEventViaEdgeFunction({
+            calendar_id: 'primary',
+            event_id: previous.google_event_id,
+          })
+        } catch (calendarError) {
+          console.warn('Calendar event deletion failed:', calendarError.message)
+        }
+      }
+
       if (editingId === id) setEditingId(null)
       await loadTasks()
     }

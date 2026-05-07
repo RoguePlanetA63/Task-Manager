@@ -23,7 +23,7 @@ export function fetchAllActiveTasks() {
     .order('id', { ascending: false })
 }
 
-export async function insertTask({ taskName, taskDescription, email, userId }) {
+export async function insertTask({ taskName, taskDescription, email, userId, startAt = null, endAt = null }) {
   const owner = normalizeEmail(email)
   if (!owner) {
     return scopedError('Missing user email')
@@ -34,6 +34,9 @@ export async function insertTask({ taskName, taskDescription, email, userId }) {
       Task: taskName,
       Description: taskDescription ?? '',
       email: owner,
+      user_id: userId,
+      start_at: startAt,
+      end_at: endAt,
       isDeleted: false,
     })
     .select()

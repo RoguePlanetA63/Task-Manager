@@ -85,6 +85,34 @@ export default function TaskCard({
             className="field-input"
             defaultValue={task.Description ?? ''}
           />
+          <label htmlFor={`edit-start-at-${task.id}`} className="field-label">
+            Start at
+          </label>
+          <input
+            id={`edit-start-at-${task.id}`}
+            name="taskStartAt"
+            type="datetime-local"
+            className="field-input"
+            defaultValue={
+              task.start_at
+                ? new Date(task.start_at).toISOString().slice(0, 16)
+                : ''
+            }
+          />
+          <label htmlFor={`edit-end-at-${task.id}`} className="field-label">
+            End at
+          </label>
+          <input
+            id={`edit-end-at-${task.id}`}
+            name="taskEndAt"
+            type="datetime-local"
+            className="field-input"
+            defaultValue={
+              task.end_at
+                ? new Date(task.end_at).toISOString().slice(0, 16)
+                : ''
+            }
+          />
           <div className="task-card__edit-actions">
             <button type="submit" className="btn btn--primary btn--sm">
               Save

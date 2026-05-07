@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { connectGoogleCalendar } from '../lib/authApi'
 
 function getInitial(email) {
   if (!email) return '?'
@@ -68,6 +69,17 @@ export default function UserMenu({ email, theme, onToggleTheme, onSignOut, onOpe
           >
             <span>Theme</span>
             <span className="user-menu__hint">{theme === 'dark' ? 'Dark' : 'Light'}</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="user-menu__item"
+            onClick={() => {
+              setOpen(false)
+              connectGoogleCalendar()
+            }}
+          >
+            Connect Google Calendar
           </button>
           <button
             type="button"

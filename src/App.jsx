@@ -8,11 +8,12 @@ import TaskCard from './components/TaskCard.jsx'
 import './css/App.css'
 import { isAdminSession } from './lib/adminAuth'
 import { normalizeEmail } from './lib/emailUtils'
-import { signOut } from './lib/authApi'
+import { signOut, saveGoogleRefreshToken } from './lib/authApi'
 import { fetchProfilesByEmails } from './lib/profilesApi'
 import ProfilePage from './components/ProfilePage.jsx'
 import AdminPanel from './taskList/AdminPanel.jsx'
 import { useTaskApp } from './taskList/useTaskApp'
+import { supabase } from './lib/supabaseClient'
 
 const THEME_STORAGE_KEY = 'tm:theme'
 
@@ -57,6 +58,18 @@ function App() {
       /* ignore quota / privacy errors */
     }
   }, [theme])
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.provider_refresh_token) {
+        saveGoogleRefreshToken(session)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   // Tiny delay before showing the empty state so the skeleton doesn't flash
   // for fast loads. Once the window passes (or tasks arrive), we never go back
@@ -257,6 +270,28 @@ function App() {
               id="task-description"
               className="field-input"
               placeholder="Optional details"
+            />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="task-start-at">
+              Start at
+            </label>
+            <input
+              type="datetime-local"
+              name="taskStartAt"
+              id="task-start-at"
+              className="field-input"
+            />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="task-end-at">
+              End at
+            </label>
+            <input
+              type="datetime-local"
+              name="taskEndAt"
+              id="task-end-at"
+              className="field-input"
             />
           </div>
           <div className="new-task-form__actions">
