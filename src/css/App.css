@@ -1,5 +1,10 @@
 @import './components.css';
 
+.app {
+  display: flex;
+  flex-direction: row;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -479,3 +484,85 @@
   border-top: 1px solid var(--border);
 }
 
+/* ============================================================
+   Weather widget (CSS-only polish; matches Weather.jsx)
+   ============================================================ */
+
+.side-panel{
+  /* copy task-card theme*/
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+.title{
+  margin: 0 0 var(--space-2);
+  font-size: 1.15rem;
+  color: var(--text-h);
+}
+.button{
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.message{
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.placeholder{
+  width: 100%;
+  height: 100px;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+}
+.temp{
+  margin: 0.5rem 0;
+  font-size: 2.5rem;
+  color: var(--text-h);
+}
+.placeholderText{ 
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.error{
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+.icon{
+  width: 60px;
+  height: 60px;
+}
+.city{
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-h);
+}
+.weatherMain{
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text);
+}
+.infoCard{  
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.85rem;
+}

@@ -60,7 +60,7 @@ export async function insertTask({ taskName, taskDescription, email, userId, sta
   return { data, error: null }
 }
 
-export async function updateTask(id, fields, ownerEmail, { userId, previous } = {}) {
+export async function updateTask(id, fields, ownerEmail, { userId, previous, skipLog = false } = {}) {
   const owner = normalizeEmail(ownerEmail)
   if (!owner) {
     return scopedError('Missing user email')
@@ -76,7 +76,13 @@ export async function updateTask(id, fields, ownerEmail, { userId, previous } = 
   if (!data?.length) {
     return scopedError('Task not found or you do not have permission to update it')
   }
-  if (userId && previous) {
+  const shouldLogUpdate =
+    !skipLog &&
+    userId &&
+    previous &&
+    (Object.hasOwn(fields, 'Task') || Object.hasOwn(fields, 'Description'))
+
+  if (shouldLogUpdate) {
     const titleOld = previous.Task ?? null
     const descOld =
       previous.Description != null && String(previous.Description).trim() !== ''

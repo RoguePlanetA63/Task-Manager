@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient'
+import { fetchGoogleConnectionStatus } from './profilesApi'
 
 export async function calendarEventViaEdgeFunction(eventData) {
   const {
@@ -8,6 +9,14 @@ export async function calendarEventViaEdgeFunction(eventData) {
 
   if (sessionError || !session) {
     throw new Error('No active session')
+  }
+
+  const { connected, error: connectionError } = await fetchGoogleConnectionStatus(session.user.id)
+  if (connectionError) {
+    console.warn('Google Calendar connection status unavailable:', connectionError.message)
+  }
+  if (!connected) {
+    return { skipped: true, reason: 'Google Calendar is not connected' }
   }
 
   const response = await fetch(

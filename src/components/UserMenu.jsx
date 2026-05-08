@@ -7,9 +7,18 @@ function getInitial(email) {
   return trimmed ? trimmed[0].toUpperCase() : '?'
 }
 
-export default function UserMenu({ email, theme, onToggleTheme, onSignOut, onOpenProfile }) {
+export default function UserMenu({
+  email,
+  displayName,
+  theme,
+  isGoogleConnected,
+  onToggleTheme,
+  onSignOut,
+  onOpenProfile,
+}) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
+  const accountName = displayName?.trim() || 'User'
 
   useEffect(() => {
     if (!open) return
@@ -39,6 +48,13 @@ export default function UserMenu({ email, theme, onToggleTheme, onSignOut, onOpe
       >
         <span className="user-menu__avatar" aria-hidden>
           {getInitial(email)}
+        </span>
+        <span className="user-menu__trigger-copy">
+          <strong>{accountName}</strong>
+          <span>{email || 'Signed in'}</span>
+        </span>
+        <span className="user-menu__chevron" aria-hidden>
+          ⌄
         </span>
       </button>
       {open ? (
@@ -70,17 +86,19 @@ export default function UserMenu({ email, theme, onToggleTheme, onSignOut, onOpe
             <span>Theme</span>
             <span className="user-menu__hint">{theme === 'dark' ? 'Dark' : 'Light'}</span>
           </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="user-menu__item"
-            onClick={() => {
-              setOpen(false)
-              connectGoogleCalendar()
-            }}
-          >
-            Connect Google Calendar
-          </button>
+          {!isGoogleConnected ? (
+            <button
+              type="button"
+              role="menuitem"
+              className="user-menu__item user-menu__item--google"
+              onClick={() => {
+                setOpen(false)
+                connectGoogleCalendar(email)
+              }}
+            >
+              Connect Google Calendar
+            </button>
+          ) : null}
           <button
             type="button"
             role="menuitem"

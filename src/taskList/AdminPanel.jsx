@@ -36,7 +36,10 @@ export default function AdminPanel({ session }) {
   }, [])
 
   useEffect(() => {
-    refresh()
+    const t = setTimeout(() => {
+      void refresh()
+    }, 0)
+    return () => clearTimeout(t)
   }, [refresh])
 
   useEffect(() => {
@@ -58,7 +61,10 @@ export default function AdminPanel({ session }) {
   }, [])
 
   useEffect(() => {
-    refreshLogs()
+    const t = setTimeout(() => {
+      void refreshLogs()
+    }, 0)
+    return () => clearTimeout(t)
   }, [refreshLogs])
 
   const filteredSorted = useMemo(() => {

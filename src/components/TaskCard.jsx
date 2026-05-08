@@ -1,3 +1,6 @@
+import { getDefaultTaskWindow, toDatetimeLocalValue } from '../lib/taskDateRules'
+import { formatTaskDate, getTaskStatus, getTaskStatusLabel } from '../lib/taskStatus'
+
 function avatarInitial(label) {
   if (!label) return '·'
   const trimmed = String(label).trim()
@@ -22,6 +25,10 @@ export default function TaskCard({
   const canOpenProfile = Boolean(
     onOpenProfileOwner && ownerEmail && ownerEmail !== '—',
   )
+  const status = getTaskStatus(task)
+  const statusLabel = getTaskStatusLabel(status)
+  const taskDate = task.end_at || task.start_at
+  const taskWindow = getDefaultTaskWindow()
 
   const ownerButton = canOpenProfile ? (
     <button
@@ -61,7 +68,7 @@ export default function TaskCard({
   )
 
   return (
-    <li className={`task-card${mine ? ' task-card--mine' : ''}`}>
+    <li className={`task-card task-card--${status}${mine ? ' task-card--mine' : ''}`}>
       {isEditing ? (
         <form className="task-card__edit" onSubmit={(e) => onSubmitEdit(e, task.id)}>
           <label htmlFor={`edit-name-${task.id}`} className="field-label">
@@ -95,9 +102,10 @@ export default function TaskCard({
             className="field-input"
             defaultValue={
               task.start_at
-                ? new Date(task.start_at).toISOString().slice(0, 16)
+                ? toDatetimeLocalValue(new Date(task.start_at))
                 : ''
             }
+            min={taskWindow.minStart}
           />
           <label htmlFor={`edit-end-at-${task.id}`} className="field-label">
             End at
@@ -109,9 +117,10 @@ export default function TaskCard({
             className="field-input"
             defaultValue={
               task.end_at
-                ? new Date(task.end_at).toISOString().slice(0, 16)
+                ? toDatetimeLocalValue(new Date(task.end_at))
                 : ''
             }
+            min={taskWindow.minEnd}
           />
           <div className="task-card__edit-actions">
             <button type="submit" className="btn btn--primary btn--sm">
@@ -126,30 +135,38 @@ export default function TaskCard({
         <>
           <div className="task-card__head">
             <h3 className="task-card__title">{task.Task}</h3>
-            {mine ? <span className="chip chip--accent">Mine</span> : null}
+            <span className={`chip chip--${status}`}>{statusLabel}</span>
           </div>
           {task.Description ? (
             <p className="task-card__desc">{task.Description}</p>
           ) : (
             <p className="task-card__desc task-card__desc--empty">No description</p>
           )}
+          <div className="task-card__meta">
+            <span className="task-card__calendar" aria-hidden />
+            <span>{formatTaskDate(taskDate)}</span>
+          </div>
           <div className="task-card__footer">
             {ownerButton}
             {mine ? (
               <div className="task-card__actions">
                 <button
                   type="button"
-                  className="btn btn--ghost btn--sm"
+                  className="icon-btn"
                   onClick={() => onBeginEdit(task.id)}
+                  aria-label={`Edit ${task.Task}`}
+                  title="Edit task"
                 >
-                  Edit
+                  ✎
                 </button>
                 <button
                   type="button"
-                  className="btn btn--ghost btn--sm btn--danger"
+                  className="icon-btn icon-btn--danger"
                   onClick={() => onDelete(task.id)}
+                  aria-label={`Delete ${task.Task}`}
+                  title="Delete task"
                 >
-                  Delete
+                  ×
                 </button>
               </div>
             ) : null}

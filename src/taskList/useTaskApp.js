@@ -3,7 +3,15 @@ import { supabase } from '../lib/supabaseClient'
 import { pingAuthHealth } from '../lib/authHealth'
 import * as tasksApi from '../lib/tasksApi'
 import { normalizeEmail } from '../lib/emailUtils'
+import { validateTaskWindow } from '../lib/taskDateRules'
 import { createCalendarEventViaEdgeFunction, editCalendarEventViaEdgeFunction, deleteCalendarEventViaEdgeFunction } from '../lib/calendarEdgeFunctionApi'
+
+function showDateValidationError(message) {
+  if (typeof window !== 'undefined') {
+    window.alert(message)
+  }
+  console.warn(message)
+}
 
 export function useTaskApp() {
   const [conn, setConn] = useState({ status: 'checking', message: '' })
@@ -72,8 +80,12 @@ export function useTaskApp() {
 
   useEffect(() => {
     if (session) {
-      loadTasks()
+      const t = setTimeout(() => {
+        void loadTasks()
+      }, 0)
+      return () => clearTimeout(t)
     }
+    return undefined
   }, [session, loadTasks])
 
   const handleAddTask = async (e) => {
@@ -84,6 +96,11 @@ export function useTaskApp() {
     const taskDescription = form.taskDescription.value
     const startTime = form.taskStartAt?.value
     const endTime = form.taskEndAt?.value
+    const dateError = validateTaskWindow(startTime, endTime)
+    if (dateError) {
+      showDateValidationError(dateError)
+      return false
+    }
 
     const { data, error } = await tasksApi.insertTask({
       taskName,
@@ -96,7 +113,7 @@ export function useTaskApp() {
 
     if (error) {
       console.error(error)
-      return
+      return false
     }
 
     // Try to sync to Google Calendar if user has connected it and times provided
@@ -116,7 +133,7 @@ export function useTaskApp() {
             data.id,
             { google_event_id: eventResponse.event.id },
             userEmail,
-            { userId, previous: data }
+            { userId, previous: data, skipLog: true }
           )
         }
       } catch (calendarError) {
@@ -126,6 +143,7 @@ export function useTaskApp() {
 
     e.target.reset()
     await loadTasks()
+    return true
   }
 
   const beginEditTask = (id) => {
@@ -143,12 +161,21 @@ export function useTaskApp() {
     const previous = tasks.find((t) => t.id === id)
     const newTitle = form.taskName.value
     const newDescription = form.taskDescription.value
+    const startTime = form.taskStartAt?.value
+    const endTime = form.taskEndAt?.value
+    const dateError = validateTaskWindow(startTime, endTime)
+    if (dateError) {
+      showDateValidationError(dateError)
+      return false
+    }
 
     const { data, error } = await tasksApi.updateTask(
       id,
       {
         Task: newTitle,
         Description: newDescription,
+        start_at: startTime ? new Date(startTime).toISOString() : null,
+        end_at: endTime ? new Date(endTime).toISOString() : null,
       },
       userEmail,
       previous && userId ? { userId, previous } : {},
@@ -156,7 +183,7 @@ export function useTaskApp() {
 
     if (error) {
       console.error(error)
-      return
+      return false
     }
 
     if (data) {
@@ -168,8 +195,8 @@ export function useTaskApp() {
             event_id: previous.google_event_id,
             summary: newTitle,
             description: newDescription,
-            start: previous.start_at,
-            end: previous.end_at,
+            start: startTime ? new Date(startTime).toISOString() : previous.start_at,
+            end: endTime ? new Date(endTime).toISOString() : previous.end_at,
           })
         } catch (calendarError) {
           console.warn('Calendar event update failed:', calendarError.message)
@@ -179,6 +206,7 @@ export function useTaskApp() {
       setEditingId(null)
       await loadTasks()
     }
+    return true
   }
 
   const handleDeleteTask = async (id) => {
@@ -213,8 +241,10 @@ export function useTaskApp() {
     }
   }
 
-  const isTaskOwner = (task) =>
-    Boolean(userEmail && normalizeEmail(task.email) === normalizeEmail(userEmail))
+  const isTaskOwner = useCallback(
+    (task) => Boolean(userEmail && normalizeEmail(task.email) === normalizeEmail(userEmail)),
+    [userEmail],
+  )
 
   return {
     conn,

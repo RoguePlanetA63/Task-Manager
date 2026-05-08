@@ -5,17 +5,28 @@ import EmptyState from './components/EmptyState.jsx'
 import Modal from './components/Modal.jsx'
 import SkeletonCards from './components/SkeletonCards.jsx'
 import TaskCard from './components/TaskCard.jsx'
+import Weather from './components/Weather.jsx'
 import './css/App.css'
 import { isAdminSession } from './lib/adminAuth'
 import { normalizeEmail } from './lib/emailUtils'
 import { signOut, saveGoogleRefreshToken } from './lib/authApi'
-import { fetchProfilesByEmails } from './lib/profilesApi'
+import { fetchGoogleConnectionStatus, fetchProfilesByEmails } from './lib/profilesApi'
 import ProfilePage from './components/ProfilePage.jsx'
 import AdminPanel from './taskList/AdminPanel.jsx'
 import { useTaskApp } from './taskList/useTaskApp'
 import { supabase } from './lib/supabaseClient'
+import { getDefaultTaskWindow } from './lib/taskDateRules'
+import { getTaskStatus } from './lib/taskStatus'
 
 const THEME_STORAGE_KEY = 'tm:theme'
+
+function isGoogleSession(session) {
+  return Boolean(
+    session?.provider_refresh_token ||
+      session?.user?.app_metadata?.provider === 'google' ||
+      session?.user?.app_metadata?.providers?.includes?.('google'),
+  )
+}
 
 function getInitialTheme() {
   if (typeof window === 'undefined') return 'light'
@@ -49,6 +60,10 @@ function App() {
   const [theme, setTheme] = useState(getInitialTheme)
   const [newTaskOpen, setNewTaskOpen] = useState(false)
   const [loadDelayElapsed, setLoadDelayElapsed] = useState(false)
+  const [taskFilter, setTaskFilter] = useState('all')
+  const [taskSearch, setTaskSearch] = useState('')
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false)
+  const [displayName, setDisplayName] = useState('')
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -63,8 +78,8 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.provider_refresh_token) {
-        saveGoogleRefreshToken(session)
+      if (isGoogleSession(session)) {
+        void saveGoogleRefreshToken(session)
       }
     })
 
@@ -103,6 +118,34 @@ function App() {
 
   useEffect(() => {
     let cancelled = false
+    if (!userId) {
+      const t = setTimeout(() => {
+        setIsGoogleConnected(false)
+        setDisplayName('')
+      }, 0)
+      return () => {
+        cancelled = true
+        clearTimeout(t)
+      }
+    }
+
+    ;(async () => {
+      const { connected, displayName: userDisplayName, error } = await fetchGoogleConnectionStatus(userId)
+      if (cancelled) return
+      if (error) {
+        console.warn('Google connection status:', error.message)
+      }
+      setIsGoogleConnected(connected)
+      setDisplayName(userDisplayName)
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
+
+  useEffect(() => {
+    let cancelled = false
     ;(async () => {
       if (!ownerEmailList.length) {
         setProfileByEmail(new Map())
@@ -120,7 +163,7 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [ownerEmailsKey, profilesRefreshKey])
+  }, [ownerEmailList, ownerEmailsKey, profilesRefreshKey])
 
   const openProfile = useCallback((target) => {
     setProfilePage({
@@ -129,11 +172,30 @@ function App() {
     })
   }, [])
 
-  useEffect(() => {
-    if (!isAdmin && appView === 'admin') setAppView('tasks')
-  }, [isAdmin, appView])
+  const activeAppView = !isAdmin && appView === 'admin' ? 'tasks' : appView
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
+
+  const visibleTasks = useMemo(() => {
+    const query = taskSearch.trim().toLowerCase()
+    return tasks.filter((task) => {
+      const status = getTaskStatus(task)
+      const mine = isTaskOwner(task)
+      const matchesFilter =
+        taskFilter === 'all' ||
+        (taskFilter === 'mine' && mine) ||
+        (taskFilter === 'completed' && status === 'done')
+      const matchesSearch =
+        !query ||
+        [task.Task, task.Description, task.email]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(query))
+
+      return matchesFilter && matchesSearch
+    })
+  }, [tasks, taskFilter, taskSearch, isTaskOwner])
+
+  const newTaskWindow = getDefaultTaskWindow()
 
   if (!authReady) {
     return (
@@ -151,14 +213,16 @@ function App() {
   }
 
   const handleNewTaskSubmit = async (e) => {
-    await handleAddTask(e)
-    setNewTaskOpen(false)
+    const saved = await handleAddTask(e)
+    if (saved) setNewTaskOpen(false)
   }
 
   return (
     <AppShell
       email={userEmail}
+      displayName={displayName}
       theme={theme}
+      isGoogleConnected={isGoogleConnected}
       onToggleTheme={toggleTheme}
       onSignOut={() => void signOut()}
       onOpenProfile={() =>
@@ -171,8 +235,9 @@ function App() {
         setAppView(v)
       }}
       suppressSegmentedNav={!!profilePage}
-      mainWide={appView === 'admin' && !profilePage}
+      mainWide={activeAppView === 'admin' && !profilePage}
       conn={conn}
+      aside={activeAppView === 'tasks' && !profilePage ? <Weather /> : null}
     >
       {profilePage ? (
         <ProfilePage
@@ -189,7 +254,7 @@ function App() {
           onBack={() => setProfilePage(null)}
           onProfileUpdated={() => setProfilesRefreshKey((k) => k + 1)}
         />
-      ) : appView === 'admin' && isAdmin ? (
+      ) : activeAppView === 'admin' && isAdmin ? (
         <AdminPanel session={session} />
       ) : (
         <section className="tasks">
@@ -209,34 +274,90 @@ function App() {
               + New task
             </button>
           </div>
-
-          {!tasksHydrated && tasks.length === 0 ? (
-            <SkeletonCards count={3} />
-          ) : tasks.length === 0 ? (
-            <EmptyState
-              title="No tasks yet"
-              description="Create the first task for your team. You'll be able to edit and delete the ones you own."
-              actionLabel="Create your first task"
-              onAction={() => setNewTaskOpen(true)}
-            />
-          ) : (
-            <ul className="card-grid">
-              {tasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  mine={isTaskOwner(task)}
-                  isEditing={editingId === task.id}
-                  onBeginEdit={beginEditTask}
-                  onCancelEdit={cancelEditTask}
-                  onSubmitEdit={handleUpdateTask}
-                  onDelete={handleDeleteTask}
-                  ownerProfile={profileByEmail.get(normalizeEmail(task.email ?? ''))}
-                  onOpenProfileOwner={openProfile}
+          <div className="tasks__panel">
+            <div className="tasks__toolbar">
+              <div className="task-tabs" role="tablist" aria-label="Task filter">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={taskFilter === 'all'}
+                  className={taskFilter === 'all' ? 'task-tabs__btn task-tabs__btn--active' : 'task-tabs__btn'}
+                  onClick={() => setTaskFilter('all')}
+                >
+                  <span aria-hidden>☷</span>
+                  All tasks
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={taskFilter === 'mine'}
+                  className={taskFilter === 'mine' ? 'task-tabs__btn task-tabs__btn--active' : 'task-tabs__btn'}
+                  onClick={() => setTaskFilter('mine')}
+                >
+                  <span aria-hidden>♙</span>
+                  My tasks
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={taskFilter === 'completed'}
+                  className={taskFilter === 'completed' ? 'task-tabs__btn task-tabs__btn--active' : 'task-tabs__btn'}
+                  onClick={() => setTaskFilter('completed')}
+                >
+                  <span aria-hidden>✓</span>
+                  Completed
+                </button>
+              </div>
+              <label className="task-search">
+                <span aria-hidden>⌕</span>
+                <span className="visually-hidden">Search tasks</span>
+                <input
+                  type="search"
+                  value={taskSearch}
+                  placeholder="Search tasks..."
+                  onChange={(e) => setTaskSearch(e.target.value)}
                 />
-              ))}
-            </ul>
-          )}
+              </label>
+            </div>
+            {!tasksHydrated && tasks.length === 0 ? (
+              <SkeletonCards count={3} />
+            ) : tasks.length === 0 ? (
+              <EmptyState
+                title="No tasks yet"
+                description="Create the first task for your team. You'll be able to edit and delete the ones you own."
+                actionLabel="Create your first task"
+                onAction={() => setNewTaskOpen(true)}
+              />
+            ) : visibleTasks.length === 0 ? (
+              <EmptyState
+                title="No matching tasks"
+                description="Try a different search or filter to bring more tasks back into view."
+                actionLabel="Clear filters"
+                onAction={() => {
+                  setTaskFilter('all')
+                  setTaskSearch('')
+                }}
+              />
+            ) : (
+              <ul className="card-grid">
+                {visibleTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    mine={isTaskOwner(task)}
+                    isEditing={editingId === task.id}
+                    onBeginEdit={beginEditTask}
+                    onCancelEdit={cancelEditTask}
+                    onSubmitEdit={handleUpdateTask}
+                    onDelete={handleDeleteTask}
+                    ownerProfile={profileByEmail.get(normalizeEmail(task.email ?? ''))}
+                    onOpenProfileOwner={openProfile}
+                  />
+                ))}
+              </ul>
+            )}
+            <div className="tasks__count">{visibleTasks.length} tasks total</div>
+          </div>
         </section>
       )}
 
@@ -281,6 +402,8 @@ function App() {
               name="taskStartAt"
               id="task-start-at"
               className="field-input"
+              min={newTaskWindow.minStart}
+              defaultValue={newTaskWindow.defaultStart}
             />
           </div>
           <div className="field">
@@ -292,6 +415,8 @@ function App() {
               name="taskEndAt"
               id="task-end-at"
               className="field-input"
+              min={newTaskWindow.minEnd}
+              defaultValue={newTaskWindow.defaultEnd}
             />
           </div>
           <div className="new-task-form__actions">

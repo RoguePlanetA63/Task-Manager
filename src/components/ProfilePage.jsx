@@ -52,20 +52,23 @@ export default function ProfilePage({
   }, [profileUserId, profileEmail])
 
   useEffect(() => {
-    void load()
+    const t = setTimeout(() => {
+      void load()
+    }, 0)
+    return () => clearTimeout(t)
   }, [load])
 
   useEffect(() => {
-    if (row) {
-      setDraft({
+    const nextDraft = row
+      ? {
         displayName: row.display_name ?? '',
         phone: row.phone ?? '',
         description: row.description ?? '',
-      })
-    } else {
-      setDraft({ displayName: '', phone: '', description: '' })
-    }
-  }, [row?.id, row?.updated_at])
+      }
+      : { displayName: '', phone: '', description: '' }
+    const t = setTimeout(() => setDraft(nextDraft), 0)
+    return () => clearTimeout(t)
+  }, [row])
 
   const isOwner =
     Boolean(viewerId) &&
@@ -79,11 +82,15 @@ export default function ProfilePage({
 
   useEffect(() => {
     if (!isOwner) {
-      setEditing(false)
-      return
+      const t = setTimeout(() => setEditing(false), 0)
+      return () => clearTimeout(t)
     }
     if (loading) return
-    if (!row) setEditing(true)
+    if (!row) {
+      const t = setTimeout(() => setEditing(true), 0)
+      return () => clearTimeout(t)
+    }
+    return undefined
   }, [isOwner, row, loading])
 
   const filterEmail = normalizeEmail(row?.email ?? profileEmail ?? '')
@@ -128,7 +135,7 @@ export default function ProfilePage({
         </button>
         <h1>{displayTitle}</h1>
         <p className="muted profile-page__note">
-          Profiles live in <code>public.profiles</code>. Names shown on team tasks come from this
+          Profiles live in <code>public.users_table</code>. Names shown on team tasks come from this
           table (matched by email).
         </p>
       </header>
@@ -283,6 +290,9 @@ export default function ProfilePage({
             ))}
           </ul>
         )}
+        <section className='weather-side'>
+          Weather
+        </section>
       </section>
     </div>
   )

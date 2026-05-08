@@ -5,7 +5,7 @@ export function fetchProfile(userId) {
   if (!userId) {
     return Promise.resolve({ data: null, error: { message: 'Missing user id' } })
   }
-  return supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
+  return supabase.from('users_table').select('*').eq('id', userId).maybeSingle()
 }
 
 export function fetchProfileByEmail(email) {
@@ -13,16 +13,34 @@ export function fetchProfileByEmail(email) {
   if (!e) {
     return Promise.resolve({ data: null, error: { message: 'Missing email' } })
   }
-  return supabase.from('profiles').select('*').eq('email', e).maybeSingle()
+  return supabase.from('users_table').select('*').eq('email', e).maybeSingle()
 }
 
-/** Batch lookup for task cards (emails must match stored normalized `profiles.email`). */
+/** Batch lookup for task cards (emails must match stored normalized `users_table.email`). */
 export function fetchProfilesByEmails(emails) {
   const list = [...new Set(emails.map((x) => normalizeEmail(x)).filter(Boolean))]
   if (!list.length) {
     return Promise.resolve({ data: [], error: null })
   }
-  return supabase.from('profiles').select('id, email, display_name').in('email', list)
+  return supabase.from('users_table').select('id, email, display_name').in('email', list)
+}
+
+export async function fetchGoogleConnectionStatus(userId) {
+  if (!userId) {
+    return { connected: false, displayName: '', error: { message: 'Missing user id' } }
+  }
+
+  const { data, error } = await supabase
+    .from('users_table')
+    .select('isCon2Google, display_name')
+    .eq('id', userId)
+    .maybeSingle()
+
+  return {
+    connected: Boolean(data?.isCon2Google),
+    displayName: data?.display_name?.trim() ?? '',
+    error,
+  }
 }
 
 export function upsertProfile(userId, { displayName, phone, description, accountEmail }) {
@@ -31,7 +49,7 @@ export function upsertProfile(userId, { displayName, phone, description, account
   }
   const emailNorm = accountEmail ? normalizeEmail(accountEmail) : null
   return supabase
-    .from('profiles')
+    .from('users_table')
     .upsert(
       {
         id: userId,

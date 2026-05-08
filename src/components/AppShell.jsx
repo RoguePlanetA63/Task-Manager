@@ -3,7 +3,9 @@ import UserMenu from './UserMenu.jsx'
 
 export default function AppShell({
   email,
+  displayName,
   theme,
+  isGoogleConnected,
   onToggleTheme,
   onSignOut,
   onOpenProfile,
@@ -13,6 +15,7 @@ export default function AppShell({
   suppressSegmentedNav,
   mainWide,
   conn,
+  aside,
   children,
 }) {
   const connStatus = conn?.status ?? 'checking'
@@ -21,30 +24,32 @@ export default function AppShell({
 
   return (
     <div className="shell">
-      <header className="topbar" role="banner">
-        <div className="topbar__inner">
-          <div className="topbar__brand">
-            <span className="topbar__logo" aria-hidden />
-            <span className="topbar__title">Task Manager</span>
-          </div>
-
-          <div className="topbar__actions">
-            <UserMenu
-              email={email}
-              theme={theme}
-              onToggleTheme={onToggleTheme}
-              onSignOut={onSignOut}
-              onOpenProfile={onOpenProfile}
-            />
-          </div>
+      <aside className="sidebar" role="banner">
+        <div className="sidebar__brand">
+          <span className="sidebar__logo" aria-hidden>
+            ✓
+          </span>
+          <span className="sidebar__title">Task Manager</span>
         </div>
 
         {navOptions?.length && !suppressSegmentedNav ? (
-          <div className="topbar__nav">
+          <nav className="sidebar__nav" aria-label="Primary">
             <SegmentedNav value={navValue} onChange={onNavChange} options={navOptions} />
-          </div>
+          </nav>
         ) : null}
-      </header>
+
+        <div className="sidebar__account">
+          <UserMenu
+            email={email}
+            displayName={displayName}
+            theme={theme}
+            isGoogleConnected={isGoogleConnected}
+            onToggleTheme={onToggleTheme}
+            onSignOut={onSignOut}
+            onOpenProfile={onOpenProfile}
+          />
+        </div>
+      </aside>
 
       <main className={`shell__main${mainWide ? ' shell__main--wide' : ''}`}>
         {showError ? (
@@ -52,19 +57,24 @@ export default function AppShell({
             <strong>Supabase connection error.</strong> {connMessage}
           </div>
         ) : null}
-        {children}
+        <div className="shell__content">
+          <div className="shell__body">{children}</div>
+          {aside ? <aside className="shell__aside">{aside}</aside> : null}
+        </div>
+        <footer className="shell__footer">
+          <div
+            className={`conn-dot conn-dot--${connStatus}`}
+            title={`Supabase: ${connStatus === 'checking' ? 'Checking…' : connMessage}`}
+            aria-live="polite"
+          >
+            <span className="conn-dot__pip" aria-hidden />
+            <span className="conn-dot__label">
+              {connStatus === 'ok' ? 'Connected' : connStatus === 'checking' ? 'Checking…' : 'Offline'}
+            </span>
+          </div>
+          <span>Task Manager v1.0.0</span>
+        </footer>
       </main>
-
-      <div
-        className={`conn-dot conn-dot--${connStatus}`}
-        title={`Supabase: ${connStatus === 'checking' ? 'Checking…' : connMessage}`}
-        aria-live="polite"
-      >
-        <span className="conn-dot__pip" aria-hidden />
-        <span className="conn-dot__label">
-          {connStatus === 'ok' ? 'Connected' : connStatus === 'checking' ? 'Checking…' : 'Offline'}
-        </span>
-      </div>
     </div>
   )
 }
